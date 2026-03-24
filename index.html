@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>quorsw — portfolio</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #020203;
+    --surface: #07070d;
+    --border: #141420;
+    --accent: #7c6af7;
+    --accent2: #e06cff;
+    --text: #c8c8d8;
+    --muted: #484860;
+    --card: #05050a;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grain overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  /* Background glow */
+  .bg-glow {
+    position: fixed;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    filter: blur(120px);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .glow-1 {
+    background: radial-gradient(circle, rgba(124,106,247,0.12) 0%, transparent 70%);
+    top: -200px;
+    left: -100px;
+  }
+  .glow-2 {
+    background: radial-gradient(circle, rgba(224,108,255,0.08) 0%, transparent 70%);
+    bottom: 0;
+    right: -200px;
+  }
+
+  /* Nav */
+  nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    padding: 20px 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid transparent;
+    transition: all 0.3s;
+    backdrop-filter: blur(0px);
+  }
+  nav.scrolled {
+    border-bottom-color: var(--border);
+    backdrop-filter: blur(20px);
+    background: rgba(10,10,15,0.8);
+  }
+  .nav-logo {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+  }
+  .nav-logo span { color: var(--muted); }
+  .nav-links {
+    display: flex;
+    gap: 36px;
+    list-style: none;
+  }
+  .nav-links a {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: none;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--text); }
+
+  /* Hero */
+  .hero {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 120px 48px 80px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .hero-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.2s forwards;
+  }
+  .hero-tag::before {
+    content: '// ';
+    color: var(--muted);
+  }
+
+  .hero-name {
+    font-size: clamp(64px, 10vw, 140px);
+    font-weight: 800;
+    line-height: 0.9;
+    letter-spacing: -0.03em;
+    margin-bottom: 24px;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.35s forwards;
+  }
+  .hero-name .line2 {
+    color: transparent;
+    -webkit-text-stroke: 1px var(--muted);
+  }
+
+  .hero-desc {
+    max-width: 500px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.8;
+    margin-bottom: 48px;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.5s forwards;
+  }
+
+  .hero-cta {
+    display: flex;
+    gap: 16px;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.65s forwards;
+  }
+  .btn {
+    padding: 14px 28px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    transition: all 0.25s;
+    display: inline-block;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover {
+    background: var(--accent2);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(124,106,247,0.3);
+  }
+  .btn-ghost {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover {
+    color: var(--text);
+    border-color: var(--muted);
+    transform: translateY(-2px);
+  }
+
+  /* Scroll indicator */
+  .scroll-hint {
+    position: absolute;
+    bottom: 48px;
+    left: 48px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    opacity: 0;
+    animation: fadeUp 0.8s 1s forwards;
+  }
+  .scroll-hint::after {
+    content: '';
+    width: 48px;
+    height: 1px;
+    background: var(--muted);
+    animation: expandLine 1.5s 1.5s infinite;
+  }
+
+  /* Sections */
+  section {
+    position: relative;
+    z-index: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 100px 48px;
+  }
+
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    margin-bottom: 48px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Skills */
+  .skills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+  }
+  .skill-item {
+    background: var(--card);
+    padding: 24px 28px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: background 0.2s;
+  }
+  .skill-item:hover { background: var(--surface); }
+  .skill-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+  .skill-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--text);
+  }
+
+  /* Projects */
+  .projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+  }
+  .project-card {
+    background: var(--card);
+    padding: 36px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    transition: background 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .project-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s;
+  }
+  .project-card:hover { background: var(--surface); }
+  .project-card:hover::before { transform: scaleX(1); }
+
+  .project-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+  .project-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+  }
+  .project-desc {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.7;
+    flex: 1;
+  }
+  .project-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    background: rgba(124,106,247,0.1);
+    padding: 4px 10px;
+    border: 1px solid rgba(124,106,247,0.2);
+  }
+  .project-link {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    transition: color 0.2s;
+  }
+  .project-link:hover { color: var(--accent); }
+  .project-link::after { content: '→'; }
+
+  /* Contact */
+  .contact-inner {
+    border: 1px solid var(--border);
+    background: var(--card);
+    padding: 64px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+    align-items: center;
+  }
+  .contact-title {
+    font-size: 48px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .contact-title span {
+    color: transparent;
+    -webkit-text-stroke: 1px var(--muted);
+  }
+  .contact-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.8;
+    margin-bottom: 32px;
+  }
+  .contact-links {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .contact-link {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    border: 1px solid var(--border);
+    transition: all 0.2s;
+  }
+  .contact-link:hover {
+    color: var(--text);
+    border-color: var(--accent);
+    background: rgba(124,106,247,0.05);
+  }
+  .contact-link-icon { color: var(--accent); width: 16px; text-align: center; }
+
+  /* Footer */
+  footer {
+    position: relative;
+    z-index: 1;
+    border-top: 1px solid var(--border);
+    padding: 24px 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  footer p {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* Animations */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes expandLine {
+    0%, 100% { width: 48px; opacity: 1; }
+    50% { width: 80px; opacity: 0.5; }
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.7s, transform 0.7s;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  @media (max-width: 768px) {
+    nav { padding: 20px 24px; }
+    .nav-links { display: none; }
+    .hero { padding: 100px 24px 60px; }
+    section { padding: 60px 24px; }
+    .contact-inner { grid-template-columns: 1fr; padding: 32px; gap: 32px; }
+    footer { padding: 20px 24px; flex-direction: column; gap: 8px; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-glow glow-1"></div>
+<div class="bg-glow glow-2"></div>
+
+<nav id="nav">
+  <div class="nav-logo"><span>~/</span>quorsw</div>
+  <ul class="nav-links">
+    <li><a href="#skills">навыки</a></li>
+    <li><a href="#projects">проекты</a></li>
+    <li><a href="#contact">контакт</a></li>
+  </ul>
+</nav>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-tag">веб-разработчик & автоматизация</div>
+  <h1 class="hero-name">
+    Никита<br>
+    <span class="line2">quorsw</span>
+  </h1>
+  <p class="hero-desc">
+    Создаю веб-приложения, Telegram-боты и мини-аппы.<br>
+    Автоматизирую процессы. Пишу чистый код.
+  </p>
+  <div class="hero-cta">
+    <a href="#projects" class="btn btn-primary">Посмотреть проекты</a>
+    <a href="#contact" class="btn btn-ghost">Написать мне</a>
+  </div>
+  <div class="scroll-hint">scroll</div>
+</div>
+
+<!-- Skills -->
+<section id="skills">
+  <div class="section-label reveal">Стек</div>
+  <div class="skills-grid reveal">
+    <div class="skill-item"><div class="skill-dot"></div><span class="skill-name">HTML / CSS</span></div>
+    <div class="skill-item"><div class="skill-dot"></div><span class="skill-name">Python</span></div>
+    <div class="skill-item"><div class="skill-dot"></div><span class="skill-name">Telegram Bot API</span></div>
+    <div class="skill-item"><div class="skill-dot"></div><span class="skill-name">Telegram Mini Apps</span></div>
+    <div class="skill-item"><div class="skill-dot"></div><span class="skill-name">Firebase</span></div>
+    <div class="skill-item"><div class="skill-dot"></div><span class="skill-name">Vercel</span></div>
+    <div class="skill-item"><div class="skill-dot"></div><span class="skill-name">n8n автоматизация</span></div>
+    <div class="skill-item"><div class="skill-dot"></div><span class="skill-name">Вайб-кодинг / AI</span></div>
+    <div class="skill-item"><div class="skill-dot"></div><span class="skill-name">Git / GitHub</span></div>
+    <div class="skill-item"><div class="skill-dot"></div><span class="skill-name">Веб-дизайн</span></div>
+  </div>
+</section>
+
+<!-- Projects -->
+<section id="projects">
+  <div class="section-label reveal">Проекты</div>
+  <div class="projects-grid">
+
+    <div class="project-card reveal">
+      <div class="project-num">01</div>
+      <div class="project-title">INVESTAT</div>
+      <p class="project-desc">
+        Telegram Mini App для инвесторов. Реферальная система, авторизация, Firebase-синхронизация избранного, панель администратора с блокировкой пользователей.
+      </p>
+      <div class="project-tags">
+        <span class="tag">Telegram Mini App</span>
+        <span class="tag">Firebase</span>
+        <span class="tag">Vercel</span>
+        <span class="tag">HTML / CSS</span>
+      </div>
+    </div>
+
+    <div class="project-card reveal">
+      <div class="project-num">02</div>
+      <div class="project-title">Navigation</div>
+      <p class="project-desc">
+        Веб-приложение с поддержкой Telegram-бота. Деплой на Vercel с Python-бэкендом.
+      </p>
+      <div class="project-tags">
+        <span class="tag">Python</span>
+        <span class="tag">Telegram Bot</span>
+        <span class="tag">Vercel</span>
+      </div>
+      <a href="https://navigation-git-main-quor-sw.vercel.app" target="_blank" class="project-link">Открыть проект</a>
+    </div>
+
+    <div class="project-card reveal">
+      <div class="project-num">03</div>
+      <div class="project-title">Game Store</div>
+      <p class="project-desc">
+        Веб-магазин игр. Интерфейс, каталог, карточки продуктов.
+      </p>
+      <div class="project-tags">
+        <span class="tag">HTML / CSS</span>
+        <span class="tag">Веб-дизайн</span>
+        <span class="tag">Vercel</span>
+      </div>
+      <a href="https://gamestore-quor-sw.vercel.app" target="_blank" class="project-link">Открыть проект</a>
+    </div>
+
+    <div class="project-card reveal">
+      <div class="project-num">04</div>
+      <div class="project-title">Clicker</div>
+      <p class="project-desc">
+        Игровое веб-приложение в жанре кликер. Механики прогрессии, интерактивный интерфейс.
+      </p>
+      <div class="project-tags">
+        <span class="tag">HTML / CSS</span>
+        <span class="tag">Game Dev</span>
+        <span class="tag">Vercel</span>
+      </div>
+      <a href="https://clicker-quor-sw.vercel.app" target="_blank" class="project-link">Открыть проект</a>
+    </div>
+
+    <div class="project-card reveal">
+      <div class="project-num">05</div>
+      <div class="project-title">SEO-генератор статей</div>
+      <p class="project-desc">
+        Автоматизация написания и публикации SEO-статей через n8n + ChatGPT. Автопостинг на WordPress, Пикабу, Дзен, VC.ru.
+      </p>
+      <div class="project-tags">
+        <span class="tag">n8n</span>
+        <span class="tag">OpenAI API</span>
+        <span class="tag">Автоматизация</span>
+        <span class="tag">WordPress</span>
+      </div>
+    </div>
+
+    <div class="project-card reveal">
+      <div class="project-num">06</div>
+      <div class="project-title">Telegram-боты</div>
+      <p class="project-desc">
+        Разработка ботов под разные задачи: уведомления, команды, интеграции с внешними сервисами.
+      </p>
+      <div class="project-tags">
+        <span class="tag">Python</span>
+        <span class="tag">Telegram Bot API</span>
+        <span class="tag">Автоматизация</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Contact -->
+<section id="contact">
+  <div class="section-label reveal">Контакт</div>
+  <div class="contact-inner reveal">
+    <div>
+      <h2 class="contact-title">Есть<br><span>проект?</span></h2>
+    </div>
+    <div>
+      <p class="contact-text">
+        Готов обсудить новые задачи — веб-приложения,<br>
+        Telegram-боты, автоматизацию или что-то необычное.
+      </p>
+      <div class="contact-links">
+        <a href="https://github.com/quorSW" target="_blank" class="contact-link">
+          <span class="contact-link-icon">⌥</span> github.com/quorSW
+        </a>
+        <a href="https://t.me/mikhteev_nikita" target="_blank" class="contact-link">
+          <span class="contact-link-icon">✈</span> @mikhteev_nikita в Telegram
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>© 2025 Никита / quorsw</p>
+  <p>сделано с умом</p>
+</footer>
+
+<script>
+  // Nav scroll
+  const nav = document.getElementById('nav');
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 50);
+  });
+
+  // Reveal on scroll
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), i * 80);
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1 });
+  reveals.forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
